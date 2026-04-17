@@ -1,61 +1,71 @@
 "use client";
-// src/features/interaction/OptimisticFeedback.tsx
+// src/features/server-actions/OptimisticFeedback.tsx
 import { useOptimistic, useState, useTransition } from 'react';
-import { Heart } from 'lucide-react';
-import type { ReportSectionProps } from '../../types/report';
-import { incrementLikeAction } from '@/features/server-actions/actions';
+import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { incrementLikeAction } from './actions';
 
-export function OptimisticFeedback({ id }: ReportSectionProps) {
-    const [likes, setLikes] = useState(100);
+export function OptimisticLike() {
+    const [likes, setLikes] = useState(1234);
     const [isPending, startTransition] = useTransition();
 
-    // ★ココがモダンReact 19！
-    // 現在のステートを元に「一時的な（楽観的な）状態」を生成する
+    // 楽観的UIの定義
     const [optimisticLikes, addOptimisticLike] = useOptimistic(
         likes,
         (current, _) => current + 1
     );
 
     const handleLike = async () => {
+        // startTransitionで括ることで、Next.jsに「今から非同期な状態変化が起きるよ」と教える
         startTransition(async () => {
-            // 1. まずUI上で「仮に」増やす（一瞬で反映！）
+            // サーバーの返答を待たずに、見た目だけ先に＋1する
             addOptimisticLike(null);
 
-            // 2. Server Action　を直接呼ぶ
-            const updateLikes = await incrementLikeAction(likes);
-
-            // 3. 実際のステートを更新
-            setLikes(updateLikes);
+            try {
+                // サーバー側の関数（Server Action）を直接実行
+                const updatedLikes = await incrementLikeAction(likes);
+                setLikes(updatedLikes);
+            } catch (e) {
+                console.error("更新に失敗しました");
+                // 失敗した場合は、自動的に optimisticLikes が元の likes に戻る！
+            }
         });
     };
 
     return (
-        <section id={id} className="bg-pink-50 border-pink-100">
-            <div className="mb-6">
-                <h3 className="text-xl font-bold text-pink-900">3. Actions & Optimistic UI</h3>
-                <p className="text-sm text-pink-700">
-                    サーバーのレスポンスを待たず、ユーザーの操作に即座に反応する「期待感」の設計。
+        <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-emerald-400 rounded-full" />
+                    <div>
+                        <p className="font-bold text-slate-900">Next.js Expert</p>
+                        <p className="text-xs text-slate-400">2026年4月17日 · サーバー通信中</p>
+                    </div>
+                </div>
+                
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                    Server Actionsを使えば、ローディングスピナーを見る時間はもう終わりです。
+                    このボタンを押してみてください。ネットワークが遅くても、数値は「即座に」変わります。
                 </p>
+
+                <div className="flex items-center justify-between border-t border-slate-50 pt-4">
+                    <button
+                        onClick={handleLike}
+                        disabled={isPending}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all
+                            ${isPending ? 'text-pink-500 bg-pink-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                    >
+                        <Heart className={`w-5 h-5 ${isPending || optimisticLikes > 1234 ? 'fill-pink-500 text-pink-500' : ''}`} />
+                        <span className="font-bold">{optimisticLikes}</span>
+                    </button>
+                    
+                    <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl">
+                        <MessageCircle className="w-5 h-5" />
+                    </button>
+                    <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-xl">
+                        <Share2 className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
-
-            <div className="flex flex-col items-center gap-4 bg-white p-10 rounded-2xl shadow-sm">
-                <button
-                    onClick={handleLike}
-                    disabled={isPending}
-                    className={`
-            group flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all
-            ${isPending ? 'bg-pink-100 text-pink-400' : 'bg-pink-500 text-white hover:bg-pink-600 active:scale-95'}
-          `}
-                >
-                    <Heart className={`w-5 h-5 ${isPending ? 'fill-pink-400' : 'group-hover:fill-white'}`} />
-                    {optimisticLikes} Likes
-                </button>
-
-                {isPending && (
-                    <p className="text-xs text-pink-400 animate-pulse">サーバーと同期中...</p>
-                )}
-            </div>
-        </section>
-
+        </div>
     );
 }
