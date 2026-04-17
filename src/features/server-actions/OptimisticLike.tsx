@@ -1,5 +1,6 @@
-"use client";
 // src/features/server-actions/OptimisticFeedback.tsx
+"use client";
+
 import { useOptimistic, useState, useTransition } from 'react';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { incrementLikeAction } from './actions';

@@ -1,5 +1,6 @@
-"use client";
 // src/components/ReportNavigation.tsx
+"use client";
+
 import React from 'react';
 
 export function ReportNavigation() {

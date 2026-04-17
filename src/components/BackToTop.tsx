@@ -1,5 +1,6 @@
-"use client";
 // src/components/BackToTop.tsx
+"use client";
+
 import { useState, useEffect } from 'react';
 
 export function BackToTop() {

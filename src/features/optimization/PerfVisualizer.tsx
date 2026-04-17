@@ -1,5 +1,6 @@
-"use client";
 // src/features/optimization/PerfVisualizer.tsx
+"use client";
+
 import { useState, useRef, useEffect } from 'react';
 import { Cpu, Activity } from 'lucide-react';
 
