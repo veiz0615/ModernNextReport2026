@@ -24,7 +24,7 @@ export function BackToTop() {
     return (
         <button
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 p-4 bg-slate-800 text-white rounded-full shadow-2xl hover:bg-blue-600 hover:scale-110 transition-all duration-300 group z-50"
+            className="fixed bottom-8 right-8 p-4 bg-slate-800/90 text-white rounded-full shadow-2xl hover:bg-blue-600 hover:scale-110 transition-all duration-300 group z-40"
             aria-label="TOPへ戻る"
         >
             {/* 上向き矢印のアイコン */}

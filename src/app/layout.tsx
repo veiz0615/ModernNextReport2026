@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReportNavigation } from "@/components/ReportNavigation";
+import { BackToTop } from "@/components/BackToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,15 +26,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}>
+      <body className={`
+        ${geistSans.variable} 
+        ${geistMono.variable} 
+        antialiased 
+        bg-slate-50 
+        text-slate-900 
+        w-full 
+        overflow-x-hidden
+        `}>
         {/* 全ページ共通のナビゲーション */}
         <ReportNavigation />
-        
+
         {/* 各ページの中身がここに入る */}
-        <div className="pt-16"> 
+        <div className="pt-16">
           {children}
         </div>
-
+        <BackToTop />
         {/* 必要なら共通のフッターもここに */}
       </body>
     </html>

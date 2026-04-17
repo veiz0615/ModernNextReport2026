@@ -46,7 +46,7 @@ export default function HomePage() {
           <div className="inline-block px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-full tracking-widest uppercase mb-4">
             Next.js 16.2.4 Project
           </div>
-          <h1 className="text-6xl font-black text-slate-900 tracking-tight leading-tight">
+          <h1 className="text-[clamp(1.5rem,8vw,3.5rem)] font-black text-slate-900 tracking-tight leading-tight">
             Next.js 2026 <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
               Implementation Report
