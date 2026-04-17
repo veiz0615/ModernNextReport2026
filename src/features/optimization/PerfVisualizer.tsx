@@ -1,76 +1,87 @@
 "use client";
-// src/features/compiler-report/HighPerfVisualizer.tsx
-import { useState, useEffect } from 'react';
-import type { ReportSectionProps } from '../../types/report';
+// src/features/optimization/PerfVisualizer.tsx
+import { useState, useRef, useEffect } from 'react';
+import { Cpu, Activity } from 'lucide-react';
 
-// 重い計算をシミュレートする関数
-const generateParticles = (count: number, time: number) => {
-    return Array.from({ length: count }).map((_, i) => ({
-        id: i,
-        x: Math.sin(i * 0.2 + time) * 100 + 150,
-        y: Math.cos(i * 0.5 + time) * 100 + 150,
-        color: `hsl(${(i + time * 50) % 360}, 70%, 60%)`,
-    }));
-};
+// パーティクル1つ1つのコンポーネント（Compilerが自動でメモ化する）
+function Particle({ x, y, color }: { x: number; y: number; color: string }) {
+  return (
+    <div 
+      className="absolute w-1 h-1 rounded-full transition-all duration-500 ease-out"
+      style={{ 
+        left: `${x}%`, 
+        top: `${y}%`, 
+        backgroundColor: color,
+        boxShadow: `0 0 8px ${color}`
+      }} 
+    />
+  );
+}
 
-export function HighPerfVisualizer({ id }: ReportSectionProps) {
-    const [time, setTime] = useState(0);
-    const [mounted, setMounted] = useState(false);
+export function PerfVisualizer() {
+  const [count, setCount] = useState(100);
+  const [lastRenderTime, setLastRenderTime] = useState(0);
+  
+  // 大量のパーティクルデータを生成
+  const particles = Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    color: `hsl(${Math.random() * 360}, 70%, 60%)`
+  }));
 
-    // 常に再レンダリングを走らせる
-    useEffect(() => {
-        setMounted(true);
+  // レンダリング時間を計測
+  const startTime = useRef(performance.now());
+  useEffect(() => {
+    setLastRenderTime(performance.now() - startTime.current);
+    startTime.current = performance.now();
+  });
 
-        const interval = setInterval(() => {
-            setTime((t) => t + 0.05);
-        }, 16); // 約60fps
-        return () => clearInterval(interval);
-    }, []);
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl">
+          <div className="flex items-center gap-2 text-emerald-400 mb-4">
+            <Cpu className="w-5 h-5" />
+            <span className="text-sm font-bold uppercase tracking-wider">Compiler Status</span>
+          </div>
+          <div className="text-3xl font-black text-white">AUTO-MEMOIZED</div>
+          <p className="text-slate-400 text-xs mt-2">React Compiler (v19+) is optimizing this component</p>
+        </div>
 
-    // ★重要：マウントされるまでは何も表示しない、もしくは静的な状態を返す
-    // これにより、サーバーとクライアントの「最初の1フレーム」が完全に一致します
-    if (!mounted) {
-        return (
-            <section id={id} className="bg-white shadow-sm">
-                <div className="h-[300px] w-full bg-slate-900 rounded-xl" />
-            </section>
-        );
-    }
+        <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl">
+          <div className="flex items-center gap-2 text-blue-400 mb-4">
+            <Activity className="w-5 h-5" />
+            <span className="text-sm font-bold uppercase tracking-wider">Render Time</span>
+          </div>
+          <div className="text-3xl font-black text-white">{lastRenderTime.toFixed(2)} ms</div>
+          <p className="text-slate-400 text-xs mt-2">Current performance overhead</p>
+        </div>
+      </div>
 
-    // ★ココがポイント！
-    // 本来なら generateParticles は再レンダリングのたびに実行されるので
-    // 昔なら useMemo(() => generateParticles(500, time), [time]) と書いていました。
-    // 2026年の React Compiler 環境では、このままでも自動的に最適化されます。
-    const particles = generateParticles(500, time);
+      <div className="relative h-64 bg-slate-950 rounded-3xl overflow-hidden border border-slate-800 shadow-inner">
+        {particles.map((p) => (
+          <Particle key={p.id} x={p.x} y={p.y} color={p.color} />
+        ))}
+      </div>
 
-    return (
-        <section id={id} className="bg-white shadow-sm">
-            <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-800">2. React Compiler による自動メモ化</h3>
-                <p className="text-sm text-slate-500">
-                    useMemo や useCallback はもう不要。コンパイラが依存関係を自動解析し、最小限の再レンダリングを実現。
-                </p>
-            </div>
-
-            <div className="relative h-[300px] w-full bg-slate-900 rounded-xl overflow-hidden">
-                {particles.map((p) => (
-                    <div
-                        key={p.id}
-                        className="absolute w-2 h-2 rounded-full"
-                        style={{
-                            left: `${p.x}px`,
-                            top: `${p.y}px`,
-                            backgroundColor: p.color,
-                            boxShadow: `0 0 8px ${p.color}`,
-                        }}
-                    />
-                ))}
-                <div className="absolute bottom-4 right-4 text-white text-xs font-mono bg-black/50 px-2 py-1 rounded">
-                    FPS: 60 (Auto-optimized)
-                </div>
-            </div>
-
-        </section>
-
-    );
+      <div className="flex flex-col items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200">
+        <label className="text-sm font-bold text-slate-500">
+          同時レンダリング数: <span className="text-blue-600 text-lg">{count}</span>
+        </label>
+        <input 
+          type="range" 
+          min="10" 
+          max="1000" 
+          step="10"
+          value={count} 
+          onChange={(e) => setCount(Number(e.target.value))}
+          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+        />
+        <p className="text-xs text-slate-400">
+          スライダーを動かして再レンダリングを発生させても、パーティクルの配置計算が自動最適化されます。
+        </p>
+      </div>
+    </div>
+  );
 }
